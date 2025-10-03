@@ -69,11 +69,9 @@ class AuthInterceptor extends Interceptor {
         }
       } else {
         await _handleSessionExpired();
-        handler.next(err);
       }
     } catch (e) {
       await _handleSessionExpired();
-      handler.next(err);
     }
   }
 
@@ -104,7 +102,7 @@ class AuthInterceptor extends Interceptor {
       if (refreshToken == null) {
         _refreshSuccessful = false;
         await authHandler.onTokenRefreshFailed();
-        throw ApiError(message: 'Refresh token not found');
+        throw Exception('No refresh token available');
       }
 
       final response = await _makeRefreshTokenRequest(refreshToken);
@@ -126,15 +124,14 @@ class AuthInterceptor extends Interceptor {
   }
 
   Future<void> _extractTokenFromResponse(Response response) async {
-    final apiResponse = ApiResponse.fromJson(response.data);
-    await authHandler.onParsedNewToken(tokenStorage, apiResponse);
+    await authHandler.onParsedNewToken(response);
     _refreshSuccessful = true;
   }
 
   Future<Response> _retryRequest(RequestOptions requestOptions) async {
     final accessToken = await tokenStorage.onGetAccessToken();
     if (accessToken == null) {
-      throw ApiError(message: 'Retry request failed: No access token');
+      throw Exception('No access token available for retrying request');
     }
 
     return await _refreshDio.request(

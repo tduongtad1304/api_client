@@ -1,7 +1,4 @@
 import 'package:dio/dio.dart';
-import '../models/api_request.dart';
-import '../models/api_response.dart';
-import '../models/api_error.dart';
 import './api_client.dart';
 
 class ApiClientImpl implements ApiClient {
@@ -10,42 +7,57 @@ class ApiClientImpl implements ApiClient {
   ApiClientImpl({required this.dio});
 
   @override
-  Future<ApiResponse> execute({required ApiRequest request}) async {
+  Future<void> execute({
+    required String method,
+    required String path,
+    required Map<String, dynamic> parameters,
+    Map<String, dynamic>? body,
+    void Function(int, int)? onSendProgress,
+    dynamic Function(Response response)? onSuccess,
+    dynamic Function(DioException error)? onError,
+  }) async {
     final options = Options(
-      method: request.method.value,
+      method: method,
       contentType: Headers.jsonContentType,
     );
 
     try {
       final response = await dio.request(
-        request.path,
-        queryParameters: request.parameters,
-        data: request.body,
+        path,
+        queryParameters: parameters,
+        data: body,
         options: options,
-        onSendProgress: request.onSendProgress,
+        onSendProgress: onSendProgress,
       );
 
-      return ApiResponse.fromJson(response.data);
+      if (onSuccess != null) {
+        onSuccess(response);
+      }
     } on DioException catch (e) {
-      throw _handleDioError(e);
+      if (onError != null) {
+        onError(_handleDioError(e));
+      } else {
+        throw _handleDioError(e);
+      }
     } catch (e) {
-      throw ApiError(message: 'An unexpected error occurred: ${e.toString()}');
+      throw Exception('An unexpected error occurred: ${e.toString()}');
     }
   }
 
-  ApiError _handleDioError(DioException error) {
-    final statusCode = error.response?.statusCode ?? 500;
+  _handleDioError(DioException error) {
+    // final statusCode = error.response?.statusCode ?? 500;
 
     try {
       final json = error.response?.data as Map<String, dynamic>;
-      return ApiError(
-        statusCode: statusCode,
-        message: json['message'],
-        error: json['error'],
-      );
+      return DioException(
+          response: error.response,
+          requestOptions: error.requestOptions,
+          message: json['message'],
+          error: json['error'].toString());
     } catch (e) {
-      return ApiError(
-        statusCode: statusCode,
+      return DioException(
+        requestOptions: error.requestOptions,
+        response: error.response,
         message: error.message ?? 'Unknown error',
         error: error.type.toString(),
       );

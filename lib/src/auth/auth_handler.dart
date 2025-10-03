@@ -1,4 +1,5 @@
 import 'package:api_client/api_client.dart';
+import 'package:dio/dio.dart';
 
 abstract class AuthEventHandler {
   Future<void> onUnauthorized();
@@ -6,8 +7,7 @@ abstract class AuthEventHandler {
   Future<void> onSessionExpired();
   Future<void> onTokenRefreshFailed();
   ApiRequest refreshTokenRequest(String refreshToken);
-  Future<void> onParsedNewToken(
-      TokenStorage storage, ApiResponse response) async {}
+  Future<void> onParsedNewToken(Response response) async {}
 }
 
 // Default implementation that does nothing
@@ -31,6 +31,5 @@ class DefaultAuthEventHandler implements AuthEventHandler {
   }
 
   @override
-  Future<void> onParsedNewToken(
-      TokenStorage storage, ApiResponse response) async {}
+  Future<void> onParsedNewToken(Response response) async {}
 }

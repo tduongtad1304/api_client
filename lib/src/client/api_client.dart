@@ -1,10 +1,12 @@
-import '../models/api_request.dart';
-import '../models/api_response.dart';
+import 'package:dio/dio.dart';
 
 abstract class ApiClient {
-  Future<ApiResponse> execute({required ApiRequest request});
-}
-
-abstract class StripeAPIClient {
-  Future<dynamic> execute({required ApiRequest request});
+  Future<void> execute(
+      {required String method,
+      required String path,
+      required Map<String, dynamic> parameters,
+      Map<String, dynamic>? body,
+      void Function(int, int)? onSendProgress,
+      dynamic Function(Response response)? onSuccess,
+      dynamic Function(DioException error)? onError});
 }
