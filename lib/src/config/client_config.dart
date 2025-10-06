@@ -16,10 +16,7 @@ class ApiClientBuilder {
   AuthEventHandler? _authHandler;
   LogLevel _logLevel = LogLevel.basic;
   LogCallback? _logCallback;
-  void Function()? _onUnknownErrors;
-  final Map<String, String> _defaultHeaders = {};
-  Duration _connectTimeout = const Duration(seconds: 30);
-  Duration _receiveTimeout = const Duration(seconds: 30);
+  void Function(DioException error)? _onUnknownErrors;
   final List<Interceptor> _additionalInterceptors = [];
 
   ApiClientBuilder setBaseUrl(String url) {
@@ -47,38 +44,19 @@ class ApiClientBuilder {
     return this;
   }
 
-  ApiClientBuilder addDefaultHeader(String name, String value) {
-    _defaultHeaders[name] = value;
-    return this;
-  }
-
-  ApiClientBuilder setConnectTimeout(Duration timeout) {
-    _connectTimeout = timeout;
-    return this;
-  }
-
-  ApiClientBuilder setReceiveTimeout(Duration timeout) {
-    _receiveTimeout = timeout;
-    return this;
-  }
-
   ApiClientBuilder addInterceptor(Interceptor interceptor) {
     _additionalInterceptors.add(interceptor);
     return this;
   }
 
-  ApiClientBuilder setOnUnknownErrors(void Function()? callback) {
+  ApiClientBuilder setOnUnknownErrors(
+      void Function(DioException error)? callback) {
     _onUnknownErrors = callback;
     return this;
   }
 
   ApiClient build() {
-    final dio = Dio(BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: _connectTimeout,
-      receiveTimeout: _receiveTimeout,
-      headers: _defaultHeaders,
-    ));
+    final dio = Dio(BaseOptions(baseUrl: baseUrl));
 
     // Add logging interceptor
     if (kDebugMode) {
@@ -90,10 +68,10 @@ class ApiClientBuilder {
     }
 
     // Add auth interceptor if token storage is provided
-    if (_tokenStorage != null) {
+    if (_tokenStorage != null && _authHandler != null) {
       dio.interceptors.add(AuthInterceptor(
         tokenStorage: _tokenStorage!,
-        authHandler: _authHandler ?? DefaultAuthEventHandler(),
+        authHandler: _authHandler!,
         baseUrl: baseUrl,
         onUnknownErrors: _onUnknownErrors,
       ));

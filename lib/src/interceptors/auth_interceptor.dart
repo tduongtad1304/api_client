@@ -7,7 +7,7 @@ class AuthInterceptor extends Interceptor {
   final TokenStorage tokenStorage;
   final AuthEventHandler authHandler;
   final Dio _refreshDio;
-  final void Function()? onUnknownErrors;
+  final void Function(DioException err)? onUnknownErrors;
 
   static const int _unAuthCode = 401;
   // Refresh token state
@@ -50,7 +50,7 @@ class AuthInterceptor extends Interceptor {
   void _logUnknownErrors(DioException err) async {
     if (err.type == DioExceptionType.unknown && !kDebugMode) {
       if (onUnknownErrors != null) {
-        onUnknownErrors!();
+        onUnknownErrors!(err);
       }
     }
   }
@@ -70,7 +70,12 @@ class AuthInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
-    final requestOptions = err.requestOptions;
+    final requestOptions = err.response?.requestOptions;
+
+    if (requestOptions == null) {
+      await _handleSessionExpired();
+      return;
+    }
 
     try {
       await _refreshTokenIfNeeded();

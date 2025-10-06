@@ -64,6 +64,6 @@ class LoggingInterceptor extends Interceptor {
       log('⛔️ [${err.response?.statusCode ?? 'ERROR'}] [${requestOptions?.method}] ${requestOptions?.uri}');
       if (isShowErrorMessage) log('Error message: ${err.message}');
     }
-    super.onError(err, handler);
+    handler.next(err);
   }
 }

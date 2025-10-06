@@ -45,21 +45,22 @@ class ApiClientImpl implements ApiClient {
   }
 
   _handleDioError(DioException error) {
-    // final statusCode = error.response?.statusCode ?? 500;
-
     try {
       final json = error.response?.data as Map<String, dynamic>;
       return DioException(
-          response: error.response,
-          requestOptions: error.requestOptions,
-          message: json['message'],
-          error: json['error'].toString());
+        requestOptions: error.response?.requestOptions ?? error.requestOptions,
+        response: error.response,
+        message: json['message'],
+        type: error.type,
+        error: error.error,
+      );
     } catch (e) {
       return DioException(
-        requestOptions: error.requestOptions,
+        requestOptions: error.response?.requestOptions ?? error.requestOptions,
         response: error.response,
         message: error.message ?? 'Unknown error',
-        error: error.type.toString(),
+        type: error.type,
+        error: error.error,
       );
     }
   }
