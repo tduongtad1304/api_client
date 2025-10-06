@@ -188,7 +188,7 @@ class AuthInterceptor extends Interceptor {
   }
 
   Future<void> _handleSessionExpired() async {
-    await tokenStorage.onClearTokens();
     await authHandler.onSessionExpired();
+    await tokenStorage.onClearTokens();
   }
 }
