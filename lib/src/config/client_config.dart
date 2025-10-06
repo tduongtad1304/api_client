@@ -18,6 +18,7 @@ class ApiClientBuilder {
   LogCallback? _logCallback;
   void Function(DioException error)? _onUnknownErrors;
   final List<Interceptor> _additionalInterceptors = [];
+  bool _enableShowErrorMessagesLogs = false;
 
   ApiClientBuilder setBaseUrl(String url) {
     baseUrl = url;
@@ -55,6 +56,11 @@ class ApiClientBuilder {
     return this;
   }
 
+  ApiClientBuilder enableShowErrorMessagesLogs(bool enable) {
+    _enableShowErrorMessagesLogs = enable;
+    return this;
+  }
+
   ApiClientInterface build() {
     final dio = Dio(BaseOptions(baseUrl: baseUrl));
 
@@ -64,6 +70,7 @@ class ApiClientBuilder {
       dio.interceptors.add(LoggingInterceptor(
         logLevel: _logLevel,
         log: logCallback,
+        isShowErrorMessage: _enableShowErrorMessagesLogs,
       ));
     }
 
