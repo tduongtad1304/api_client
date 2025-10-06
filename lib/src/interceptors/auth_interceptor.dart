@@ -91,8 +91,6 @@ class AuthInterceptor extends Interceptor {
           _resetTokenRefreshFlags();
           Console.log('🎉 ALL RETRIES successful.');
         }
-      } else {
-        await _handleSessionExpired();
       }
     } catch (e) {
       await _handleSessionExpired();
@@ -105,9 +103,7 @@ class AuthInterceptor extends Interceptor {
       return;
     }
 
-    if (_isRefreshingToken && _refreshSuccessful) {
-      return;
-    }
+    if (_isRefreshingToken) return;
 
     _refreshTokenFuture = _performTokenRefresh().catchError((error) {
       _refreshTokenFuture = null;
@@ -188,7 +184,10 @@ class AuthInterceptor extends Interceptor {
   }
 
   Future<void> _handleSessionExpired() async {
-    await authHandler.onSessionExpired();
+    final accessToken = tokenStorage.onGetAccessToken();
+    if (accessToken == null) return;
+    _resetTokenRefreshFlags();
     await tokenStorage.onClearTokens();
+    await authHandler.onSessionExpired();
   }
 }
