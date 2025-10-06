@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../api_client.dart';
 
@@ -6,6 +7,7 @@ class AuthInterceptor extends Interceptor {
   final TokenStorage tokenStorage;
   final AuthEventHandler authHandler;
   final Dio _refreshDio;
+  final void Function()? onUnknownErrors;
 
   static const int _unAuthCode = 401;
   // Refresh token state
@@ -19,32 +21,49 @@ class AuthInterceptor extends Interceptor {
     required this.tokenStorage,
     required this.authHandler,
     required String baseUrl,
+    this.onUnknownErrors,
     Dio? refreshDio,
-  }) : _refreshDio = refreshDio ?? Dio(BaseOptions(baseUrl: baseUrl));
+  }) : _refreshDio = refreshDio ?? _getRefreshDio(baseUrl);
 
   void _resetTokenRefreshFlags() {
     if (_isRefreshingToken) _isRefreshingToken = false;
     if (_refreshSuccessful) _refreshSuccessful = false;
   }
 
+  static Dio _getRefreshDio(String baseUrl) {
+    final Dio retryDio = Dio(BaseOptions(baseUrl: baseUrl))
+      ..interceptors.add(LoggingInterceptor());
+    Dio getRetryDioClient() => retryDio;
+    return getRetryDioClient();
+  }
+
   @override
   Future<void> onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
-    final accessToken = await tokenStorage.onGetAccessToken();
+    final accessToken = tokenStorage.onGetAccessToken();
     if (accessToken != null) {
       options.headers['Authorization'] = 'Bearer $accessToken';
     }
     return super.onRequest(options, handler);
   }
 
+  void _logUnknownErrors(DioException err) async {
+    if (err.type == DioExceptionType.unknown && !kDebugMode) {
+      if (onUnknownErrors != null) {
+        onUnknownErrors!();
+      }
+    }
+  }
+
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
+    _logUnknownErrors(err);
     if (err.response?.statusCode == _unAuthCode) {
       _unauthorizedCount++;
       await _handleUnauthorizedError(err, handler);
       return;
     }
-    return super.onError(err, handler);
+    handler.next(err);
   }
 
   Future<void> _handleUnauthorizedError(
@@ -98,10 +117,10 @@ class AuthInterceptor extends Interceptor {
     _isRefreshingToken = true;
 
     try {
-      final refreshToken = await tokenStorage.onGetRefreshToken();
+      final refreshToken = tokenStorage.onGetRefreshToken();
       if (refreshToken == null) {
         _refreshSuccessful = false;
-        await authHandler.onTokenRefreshFailed();
+        await authHandler.onSessionExpired();
         throw Exception('No refresh token available');
       }
 
@@ -110,8 +129,6 @@ class AuthInterceptor extends Interceptor {
     } catch (e) {
       _refreshSuccessful = false;
       rethrow;
-    } finally {
-      _isRefreshingToken = false;
     }
   }
 
@@ -129,24 +146,29 @@ class AuthInterceptor extends Interceptor {
   }
 
   Future<Response> _retryRequest(RequestOptions requestOptions) async {
-    final accessToken = await tokenStorage.onGetAccessToken();
+    final accessToken = tokenStorage.onGetAccessToken();
     if (accessToken == null) {
       throw Exception('No access token available for retrying request');
     }
-
-    return await _refreshDio.request(
-      requestOptions.path,
-      data: requestOptions.data,
-      queryParameters: requestOptions.queryParameters,
-      options: Options(
-        method: requestOptions.method,
-        headers: {
-          ...requestOptions.headers,
-          'Authorization': 'Bearer $accessToken',
-        },
-        contentType: requestOptions.contentType,
-      ),
-    );
+    try {
+      final response = await _refreshDio.request(
+        requestOptions.path,
+        data: requestOptions.data,
+        queryParameters: requestOptions.queryParameters,
+        options: Options(
+          method: requestOptions.method,
+          headers: {
+            ...requestOptions.headers,
+            'Authorization': 'Bearer $accessToken',
+          },
+          contentType: requestOptions.contentType,
+        ),
+      );
+      _retrySuccessCount++;
+      return response;
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<void> _handleSessionExpired() async {

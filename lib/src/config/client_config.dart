@@ -1,4 +1,7 @@
+import 'dart:developer' as developer;
+
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../storage/token_storage.dart';
 import '../auth/auth_handler.dart';
@@ -13,6 +16,7 @@ class ApiClientBuilder {
   AuthEventHandler? _authHandler;
   LogLevel _logLevel = LogLevel.basic;
   LogCallback? _logCallback;
+  void Function()? _onUnknownErrors;
   final Map<String, String> _defaultHeaders = {};
   Duration _connectTimeout = const Duration(seconds: 30);
   Duration _receiveTimeout = const Duration(seconds: 30);
@@ -63,6 +67,11 @@ class ApiClientBuilder {
     return this;
   }
 
+  ApiClientBuilder setOnUnknownErrors(void Function()? callback) {
+    _onUnknownErrors = callback;
+    return this;
+  }
+
   ApiClient build() {
     final dio = Dio(BaseOptions(
       baseUrl: baseUrl,
@@ -72,11 +81,13 @@ class ApiClientBuilder {
     ));
 
     // Add logging interceptor
-    final logCallback = _logCallback ?? print;
-    dio.interceptors.add(LoggingInterceptor(
-      logLevel: _logLevel,
-      log: logCallback,
-    ));
+    if (kDebugMode) {
+      final logCallback = _logCallback ?? developer.log;
+      dio.interceptors.add(LoggingInterceptor(
+        logLevel: _logLevel,
+        log: logCallback,
+      ));
+    }
 
     // Add auth interceptor if token storage is provided
     if (_tokenStorage != null) {
@@ -84,6 +95,7 @@ class ApiClientBuilder {
         tokenStorage: _tokenStorage!,
         authHandler: _authHandler ?? DefaultAuthEventHandler(),
         baseUrl: baseUrl,
+        onUnknownErrors: _onUnknownErrors,
       ));
     }
 

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'dart:developer' as developer;
 
 enum LogLevel {
   none,
@@ -13,11 +14,15 @@ typedef LogCallback = void Function(String message);
 class LoggingInterceptor extends Interceptor {
   final LogLevel logLevel;
   final LogCallback log;
+  final bool isShowErrorMessage;
 
   LoggingInterceptor({
     this.logLevel = LogLevel.basic,
-    this.log = print,
+    this.log = developer.log,
+    this.isShowErrorMessage = false,
   });
+
+  static const int _unAuthCode = 401;
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
@@ -49,9 +54,15 @@ class LoggingInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
+    final requestOptions = err.response?.requestOptions;
+    if (err.response?.statusCode == LoggingInterceptor._unAuthCode) {
+      log('🚷 [401 Unauthorized] Request [${requestOptions?.method}] '
+          '${requestOptions?.path}');
+      return;
+    }
     if (logLevel != LogLevel.none) {
-      log('⚠️ [${err.response?.statusCode ?? 'ERROR'}] [${err.requestOptions.method}] ${err.requestOptions.uri}');
-      log('Error message: ${err.message}');
+      log('⛔️ [${err.response?.statusCode ?? 'ERROR'}] [${requestOptions?.method}] ${requestOptions?.uri}');
+      if (isShowErrorMessage) log('Error message: ${err.message}');
     }
     super.onError(err, handler);
   }
