@@ -38,16 +38,15 @@ class AuthInterceptor extends Interceptor {
   }
 
   @override
-  Future<void> onRequest(
-      RequestOptions options, RequestInterceptorHandler handler) async {
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     final accessToken = tokenStorage.onGetAccessToken();
     if (accessToken != null) {
       options.headers['Authorization'] = 'Bearer $accessToken';
     }
-    return super.onRequest(options, handler);
+    super.onRequest(options, handler);
   }
 
-  void _logUnknownErrors(DioException err) async {
+  void _logUnknownErrors(DioException err) {
     if (err.type == DioExceptionType.unknown && !kDebugMode) {
       if (onUnknownErrors != null) {
         onUnknownErrors!(err);

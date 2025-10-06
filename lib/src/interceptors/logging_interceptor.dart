@@ -22,12 +22,10 @@ class LoggingInterceptor extends Interceptor {
     this.isShowErrorMessage = false,
   });
 
-  static const int _unAuthCode = 401;
-
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (logLevel != LogLevel.none) {
-      log('→ [${options.method}] ${options.uri}');
+      log('→ [${options.method}] ${options.path}');
 
       if (logLevel.index >= LogLevel.headers.index) {
         log('Headers: ${options.headers}');
@@ -43,7 +41,7 @@ class LoggingInterceptor extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     if (logLevel != LogLevel.none) {
-      log('← [${response.statusCode}] [${response.requestOptions.method}] ${response.requestOptions.uri}');
+      log('← [${response.statusCode}] [${response.requestOptions.method}] ${response.requestOptions.path}');
 
       if (logLevel.index >= LogLevel.body.index) {
         log('Response data: ${response.data}');
@@ -55,13 +53,8 @@ class LoggingInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     final requestOptions = err.response?.requestOptions;
-    if (err.response?.statusCode == LoggingInterceptor._unAuthCode) {
-      log('🚷 [401 Unauthorized] Request [${requestOptions?.method}] '
-          '${requestOptions?.path}');
-      return;
-    }
     if (logLevel != LogLevel.none) {
-      log('⛔️ [${err.response?.statusCode ?? 'ERROR'}] [${requestOptions?.method}] ${requestOptions?.uri}');
+      log('⛔️ [${err.response?.statusCode ?? 'ERROR'}] [${requestOptions?.method}] ${requestOptions?.path}');
       if (isShowErrorMessage) log('Error message: ${err.message}');
     }
     handler.next(err);
