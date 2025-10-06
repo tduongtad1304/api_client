@@ -11,7 +11,7 @@ import '../client/api_client.dart';
 import '../client/api_client_impl.dart';
 
 class ApiClientBuilder {
-  String baseUrl = '';
+  String _baseUrl = '';
   TokenStorage? _tokenStorage;
   AuthEventHandler? _authHandler;
   LogLevel _logLevel = LogLevel.basic;
@@ -20,8 +20,14 @@ class ApiClientBuilder {
   final List<Interceptor> _additionalInterceptors = [];
   bool _enableShowErrorMessagesLogs = false;
 
+  ApiClientBuilder._internal();
+
+  static final ApiClientBuilder _instance = ApiClientBuilder._internal();
+
+  factory ApiClientBuilder() => _instance;
+
   ApiClientBuilder setBaseUrl(String url) {
-    baseUrl = url;
+    _baseUrl = url;
     return this;
   }
 
@@ -62,7 +68,7 @@ class ApiClientBuilder {
   }
 
   ApiClientInterface build() {
-    final dio = Dio(BaseOptions(baseUrl: baseUrl));
+    final dio = Dio(BaseOptions(baseUrl: _baseUrl));
 
     // Add logging interceptor
     if (kDebugMode) {
@@ -79,7 +85,7 @@ class ApiClientBuilder {
       dio.interceptors.add(AuthInterceptor(
         tokenStorage: _tokenStorage!,
         authHandler: _authHandler!,
-        baseUrl: baseUrl,
+        baseUrl: _baseUrl,
         onUnknownErrors: _onUnknownErrors,
       ));
     }
