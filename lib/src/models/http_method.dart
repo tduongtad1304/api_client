@@ -1,10 +1,10 @@
-enum HTTPMethod {
+enum RequestMethod {
   get('GET'),
   post('POST'),
   put('PUT'),
   delete('DELETE'),
   patch('PATCH');
 
-  const HTTPMethod(this.value);
+  const RequestMethod(this.value);
   final String value;
 }

@@ -7,10 +7,12 @@ abstract class AuthEventHandler {
   Future<void> onParsedNewToken(Response response) async {}
 }
 
-// Default implementation that does nothing
 class DefaultAuthEventHandler implements AuthEventHandler {
   @override
-  Future<void> onSessionExpired() async {}
+  Future<void> onSessionExpired() async {
+    throw UnimplementedError(
+        'onSessionExpired must be implemented to handle session expiration');
+  }
 
   @override
   ApiRequest refreshTokenRequest(String refreshToken) {
@@ -19,5 +21,8 @@ class DefaultAuthEventHandler implements AuthEventHandler {
   }
 
   @override
-  Future<void> onParsedNewToken(Response response) async {}
+  Future<void> onParsedNewToken(Response response) async {
+    throw UnimplementedError(
+        'onParsedNewToken must be implemented to parse and store new tokens');
+  }
 }

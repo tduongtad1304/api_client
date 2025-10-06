@@ -31,8 +31,7 @@ class AuthInterceptor extends Interceptor {
   }
 
   static Dio _getRefreshDio(String baseUrl) {
-    final Dio retryDio = Dio(BaseOptions(baseUrl: baseUrl))
-      ..interceptors.add(LoggingInterceptor());
+    final Dio retryDio = Dio(BaseOptions(baseUrl: baseUrl));
     Dio getRetryDioClient() => retryDio;
     return getRetryDioClient();
   }
@@ -81,6 +80,7 @@ class AuthInterceptor extends Interceptor {
 
       if (_refreshSuccessful) {
         while (_retrySuccessCount < _unauthorizedCount) {
+          Console.log('🔄️ Retrying original request...');
           final response = await _retryRequest(requestOptions);
           handler.resolve(response);
           break;
@@ -89,6 +89,7 @@ class AuthInterceptor extends Interceptor {
           _unauthorizedCount = 0;
           _retrySuccessCount = 0;
           _resetTokenRefreshFlags();
+          Console.log('🎉 ALL RETRIES successful.');
         }
       } else {
         await _handleSessionExpired();
@@ -118,6 +119,7 @@ class AuthInterceptor extends Interceptor {
   }
 
   Future<void> _performTokenRefresh() async {
+    Console.log('🔄️ Token expired ⇌ Starting token refresh...');
     _isRefreshingToken = true;
 
     try {
@@ -130,18 +132,24 @@ class AuthInterceptor extends Interceptor {
 
       final response = await _makeRefreshTokenRequest(refreshToken);
       await _extractTokenFromResponse(response);
+      Console.log('♻️ Token refresh successful!');
     } catch (e) {
       _refreshSuccessful = false;
+      Console.log('⛔️ Token refresh failed.');
       rethrow;
     }
   }
 
   Future<Response> _makeRefreshTokenRequest(String refreshToken) async {
-    return await _refreshDio.post(
+    final options = Options(
+        contentType: Headers.jsonContentType,
+        method: authHandler.refreshTokenRequest(refreshToken).method.value);
+    final response = await _refreshDio.request(
       authHandler.refreshTokenRequest(refreshToken).path,
       data: authHandler.refreshTokenRequest(refreshToken).body,
-      options: Options(contentType: Headers.jsonContentType),
+      options: options,
     );
+    return response;
   }
 
   Future<void> _extractTokenFromResponse(Response response) async {
@@ -169,8 +177,12 @@ class AuthInterceptor extends Interceptor {
         ),
       );
       _retrySuccessCount++;
+      Console.log(
+          '✔ RETRY [${response.requestOptions.method}] ${response.requestOptions.path} successful!');
       return response;
     } catch (e) {
+      Console.log(
+          '✘ RETRY [${requestOptions.method}] ${requestOptions.path} failed.');
       rethrow;
     }
   }

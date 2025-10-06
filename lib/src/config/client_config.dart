@@ -55,7 +55,7 @@ class ApiClientBuilder {
     return this;
   }
 
-  ApiClient build() {
+  ApiClientInterface build() {
     final dio = Dio(BaseOptions(baseUrl: baseUrl));
 
     // Add logging interceptor

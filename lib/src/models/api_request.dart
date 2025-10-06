@@ -10,7 +10,7 @@ class ApiRequest {
     this.onSendProgress,
   });
 
-  HTTPMethod method;
+  RequestMethod method;
   String path;
   dynamic headers;
   dynamic parameters;

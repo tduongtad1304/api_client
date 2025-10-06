@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import './api_client.dart';
 
-class ApiClientImpl implements ApiClient {
+class ApiClientImpl implements ApiClientInterface {
   final Dio dio;
 
   ApiClientImpl({required this.dio});
@@ -10,7 +10,7 @@ class ApiClientImpl implements ApiClient {
   Future<void> execute({
     required String method,
     required String path,
-    required Map<String, dynamic> parameters,
+    Map<String, dynamic>? parameters,
     Map<String, dynamic>? body,
     void Function(int, int)? onSendProgress,
     dynamic Function(Response response)? onSuccess,

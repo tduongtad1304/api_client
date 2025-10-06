@@ -9,3 +9,4 @@ export 'src/storage/token_storage.dart';
 export 'src/auth/auth_handler.dart';
 export 'src/interceptors/auth_interceptor.dart';
 export 'src/interceptors/logging_interceptor.dart';
+export 'src/utils/console.dart';
