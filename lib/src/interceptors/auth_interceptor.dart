@@ -140,6 +140,8 @@ class AuthInterceptor extends Interceptor {
     final options = Options(
         contentType: Headers.jsonContentType,
         method: authHandler.refreshTokenRequest(refreshToken).method.value);
+    Console.log(
+        '→ [${options.method}] ${authHandler.refreshTokenRequest(refreshToken).path}');
     final response = await _refreshDio.request(
       authHandler.refreshTokenRequest(refreshToken).path,
       data: authHandler.refreshTokenRequest(refreshToken).body,

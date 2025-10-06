@@ -1,10 +1,16 @@
 import 'dart:developer' as developer;
 
-import 'package:api_client/api_client.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-class ApiClientBuilder implements ApiClientConfig {
+import '../storage/token_storage.dart';
+import '../auth/auth_handler.dart';
+import '../interceptors/auth_interceptor.dart';
+import '../interceptors/logging_interceptor.dart';
+import '../client/api_client.dart';
+import '../client/api_client_impl.dart';
+
+class ApiClientBuilder {
   String _baseUrl = '';
   TokenStorage? _tokenStorage;
   AuthEventHandler? _authHandler;
@@ -20,51 +26,50 @@ class ApiClientBuilder implements ApiClientConfig {
 
   factory ApiClientBuilder() => _instance;
 
-  @override
-  void setBaseUrl(String url) {
+  ApiClientBuilder setBaseUrl(String url) {
     _baseUrl = url;
+    return this;
   }
 
-  @override
-  void setTokenStorage(TokenStorage storage) {
+  ApiClientBuilder setTokenStorage(TokenStorage storage) {
     _tokenStorage = storage;
+    return this;
   }
 
-  @override
-  void setAuthHandler(AuthEventHandler handler) {
+  ApiClientBuilder setAuthHandler(AuthEventHandler handler) {
     _authHandler = handler;
+    return this;
   }
 
-  @override
-  void setLogLevel(LogLevel level) {
+  ApiClientBuilder setLogLevel(LogLevel level) {
     _logLevel = level;
+    return this;
   }
 
-  @override
-  void setLogCallback(LogCallback callback) {
+  ApiClientBuilder setLogCallback(LogCallback callback) {
     _logCallback = callback;
+    return this;
   }
 
-  @override
-  void addInterceptor(Interceptor interceptor) {
+  ApiClientBuilder addInterceptor(Interceptor interceptor) {
     _additionalInterceptors.add(interceptor);
+    return this;
   }
 
-  @override
-  void setOnUnknownErrors(void Function(DioException error)? callback) {
+  ApiClientBuilder setOnUnknownErrors(
+      void Function(DioException error)? callback) {
     _onUnknownErrors = callback;
+    return this;
   }
 
-  @override
-  void setEnableShowErrorMessagesLogs(bool enable) {
+  ApiClientBuilder setShowErrorMessagesLogsEnabled(bool enable) {
     _enableShowErrorMessagesLogs = enable;
+    return this;
   }
 
-  @override
   ApiClientInterface build() {
     final dio = Dio(BaseOptions(baseUrl: _baseUrl));
 
-    // Add logging interceptor
     if (kDebugMode) {
       final logCallback = _logCallback ?? developer.log;
       dio.interceptors.add(LoggingInterceptor(
@@ -74,7 +79,6 @@ class ApiClientBuilder implements ApiClientConfig {
       ));
     }
 
-    // Add auth interceptor if token storage is provided
     if (_tokenStorage != null && _authHandler != null) {
       dio.interceptors.add(AuthInterceptor(
         tokenStorage: _tokenStorage!,
@@ -84,7 +88,6 @@ class ApiClientBuilder implements ApiClientConfig {
       ));
     }
 
-    // Add additional interceptors
     for (final interceptor in _additionalInterceptors) {
       dio.interceptors.add(interceptor);
     }
