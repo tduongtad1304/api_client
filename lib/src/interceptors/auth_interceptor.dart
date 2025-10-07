@@ -83,22 +83,18 @@ class AuthInterceptor extends Interceptor {
       await _refreshTokenIfNeeded();
 
       if (_refreshSuccessful != null && _refreshSuccessful == true) {
-        while (_retryFailedCount < 1) {
-          while (_retrySuccessCount < _unauthorizedCount) {
-            Console.log('🔄️ Retrying original request...');
-            final response =
-                await _retryRequest(requestOptions, retryFailedPath);
-            handler.resolve(response);
-            break;
-          }
-          if (_retrySuccessCount >= _unauthorizedCount) {
-            _unauthorizedCount = 0;
-            _retrySuccessCount = 0;
-            _retryFailedCount = 0;
-            _resetTokenRefreshFlags();
-            Console.log('🎉 ALL RETRIES successful.');
-          }
+        while (_retrySuccessCount < _unauthorizedCount) {
+          Console.log('🔄️ Retrying original request...');
+          final response = await _retryRequest(requestOptions, retryFailedPath);
+          handler.resolve(response);
           break;
+        }
+        if (_retrySuccessCount >= _unauthorizedCount) {
+          _unauthorizedCount = 0;
+          _retrySuccessCount = 0;
+          _retryFailedCount = 0;
+          _resetTokenRefreshFlags();
+          Console.log('🎉 ALL RETRIES successful.');
         }
       }
     } catch (e) {
@@ -166,6 +162,9 @@ class AuthInterceptor extends Interceptor {
 
   Future<Response> _retryRequest(RequestOptions requestOptions,
       [String? testFailedRetryPath]) async {
+    if (_retryFailedCount >= 1) {
+      throw Exception('First retry attempts failed. Logging out...');
+    }
     final accessToken = tokenStorage.onGetAccessToken();
     if (accessToken == null) {
       throw Exception('No access token available for retrying request');
