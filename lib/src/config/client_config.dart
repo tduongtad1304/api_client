@@ -19,6 +19,7 @@ class ApiClientBuilder {
   void Function(DioException error)? _onUnknownErrors;
   final List<Interceptor> _additionalInterceptors = [];
   bool _enableShowErrorMessagesLogs = false;
+  String? _retryTestFailedPath;
 
   ApiClientBuilder._internal();
 
@@ -67,6 +68,11 @@ class ApiClientBuilder {
     return this;
   }
 
+  ApiClientBuilder setRetryTestFailedPath(String path) {
+    _retryTestFailedPath = path;
+    return this;
+  }
+
   ApiClientInterface build() {
     final dio = Dio(BaseOptions(baseUrl: _baseUrl));
 
@@ -85,6 +91,7 @@ class ApiClientBuilder {
         authHandler: _authHandler!,
         baseUrl: _baseUrl,
         onUnknownErrors: _onUnknownErrors,
+        retryFailedPath: _retryTestFailedPath,
       ));
     }
 

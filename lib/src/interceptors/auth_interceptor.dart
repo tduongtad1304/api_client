@@ -8,6 +8,7 @@ class AuthInterceptor extends Interceptor {
   final AuthEventHandler authHandler;
   final Dio _refreshDio;
   final void Function(DioException err)? onUnknownErrors;
+  final String? retryFailedPath;
 
   static const int _unAuthCode = 401;
   // Refresh token state
@@ -24,6 +25,7 @@ class AuthInterceptor extends Interceptor {
     required String baseUrl,
     this.onUnknownErrors,
     Dio? refreshDio,
+    this.retryFailedPath,
   }) : _refreshDio = refreshDio ?? _getRefreshDio(baseUrl);
 
   void _resetTokenRefreshFlags() {
@@ -88,7 +90,7 @@ class AuthInterceptor extends Interceptor {
       if (_refreshSuccessful != null && _refreshSuccessful == true) {
         while (_retrySuccessCount < _unauthorizedCount) {
           Console.log('🔄️ Retrying original request...');
-          final response = await _retryRequest(requestOptions);
+          final response = await _retryRequest(requestOptions, retryFailedPath);
           handler.resolve(response);
           break;
         }
