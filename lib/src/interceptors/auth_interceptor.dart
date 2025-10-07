@@ -59,11 +59,6 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     _logUnknownErrors(err);
-    if (_refreshSuccessful != null &&
-        (_refreshSuccessful == false || _retryFailedCount == 1)) {
-      Console.log('Refresh previously failed or retried, not retrying.');
-      return;
-    }
     if (err.response?.statusCode == _unAuthCode) {
       Console.log('⛔️ 401 Unauthorized error detected.');
       _unauthorizedCount++;
@@ -86,7 +81,11 @@ class AuthInterceptor extends Interceptor {
 
     try {
       await _refreshTokenIfNeeded();
-
+      if (_refreshSuccessful != null &&
+          (_refreshSuccessful == false || _retryFailedCount == 1)) {
+        Console.log('Refresh previously failed or retried, not retrying.');
+        return;
+      }
       if (_refreshSuccessful != null && _refreshSuccessful == true) {
         while (_retrySuccessCount < _unauthorizedCount) {
           Console.log('🔄️ Retrying original request...');
