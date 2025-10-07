@@ -81,24 +81,24 @@ class AuthInterceptor extends Interceptor {
 
     try {
       await _refreshTokenIfNeeded();
-      if (_refreshSuccessful != null &&
-          (_refreshSuccessful == false || _retryFailedCount == 1)) {
-        Console.log('Refresh previously failed or retried, not retrying.');
-        return;
-      }
+
       if (_refreshSuccessful != null && _refreshSuccessful == true) {
-        while (_retrySuccessCount < _unauthorizedCount) {
-          Console.log('🔄️ Retrying original request...');
-          final response = await _retryRequest(requestOptions, retryFailedPath);
-          handler.resolve(response);
+        while (_retryFailedCount < 1) {
+          while (_retrySuccessCount < _unauthorizedCount) {
+            Console.log('🔄️ Retrying original request...');
+            final response =
+                await _retryRequest(requestOptions, retryFailedPath);
+            handler.resolve(response);
+            break;
+          }
+          if (_retrySuccessCount >= _unauthorizedCount) {
+            _unauthorizedCount = 0;
+            _retrySuccessCount = 0;
+            _retryFailedCount = 0;
+            _resetTokenRefreshFlags();
+            Console.log('🎉 ALL RETRIES successful.');
+          }
           break;
-        }
-        if (_retrySuccessCount >= _unauthorizedCount) {
-          _unauthorizedCount = 0;
-          _retrySuccessCount = 0;
-          _retryFailedCount = 0;
-          _resetTokenRefreshFlags();
-          Console.log('🎉 ALL RETRIES successful.');
         }
       }
     } catch (e) {
