@@ -151,7 +151,11 @@ class AuthInterceptor extends Interceptor {
   }
 
   Future<void> _extractTokenFromResponse(Response response) async {
-    await authHandler.onParsedNewToken(response);
+    final newToken = authHandler.onParsedNewToken(response);
+    if (newToken == null) {
+      throw Exception('Failed to parse new access token from response');
+    }
+    await tokenStorage.onSaveAccessToken(newToken);
     _refreshSuccessful = true;
   }
 

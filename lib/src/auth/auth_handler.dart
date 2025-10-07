@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 abstract class AuthEventHandler {
   Future<void> onSessionExpired();
   ApiRequest refreshTokenRequest(String refreshToken);
-  Future<void> onParsedNewToken(Response response) async {}
+  String? onParsedNewToken(Response response);
 }
 
 class DefaultAuthEventHandler implements AuthEventHandler {
@@ -21,7 +21,7 @@ class DefaultAuthEventHandler implements AuthEventHandler {
   }
 
   @override
-  Future<void> onParsedNewToken(Response response) async {
+  String? onParsedNewToken(Response response) {
     throw UnimplementedError(
         'onParsedNewToken must be implemented to parse and store new tokens');
   }

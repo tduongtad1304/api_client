@@ -1,14 +1,8 @@
 import 'dart:developer' as developer;
 
+import 'package:api_client/api_client.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-
-import '../storage/token_storage.dart';
-import '../auth/auth_handler.dart';
-import '../interceptors/auth_interceptor.dart';
-import '../interceptors/logging_interceptor.dart';
-import '../client/api_client.dart';
-import '../client/api_client_impl.dart';
 
 class ApiClientBuilder {
   String _baseUrl = '';
@@ -19,6 +13,7 @@ class ApiClientBuilder {
   void Function(DioException error)? _onUnknownErrors;
   final List<Interceptor> _additionalInterceptors = [];
   bool _enableShowErrorMessagesLogs = false;
+  Dio? _exposedDio;
 
   ApiClientBuilder._internal();
 
@@ -64,6 +59,13 @@ class ApiClientBuilder {
 
   ApiClientBuilder setShowErrorMessagesLogsEnabled(bool enable) {
     _enableShowErrorMessagesLogs = enable;
+    return this;
+  }
+
+  Dio? get dio => _exposedDio;
+
+  ApiClientBuilder setExposeDio() {
+    _exposedDio = Dio(BaseOptions());
     return this;
   }
 
