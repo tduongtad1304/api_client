@@ -12,10 +12,11 @@ class AuthInterceptor extends Interceptor {
   static const int _unAuthCode = 401;
   // Refresh token state
   static Future<void>? _refreshTokenFuture;
-  static bool _isRefreshingToken = false;
-  static bool _refreshSuccessful = false;
+  static bool? _isRefreshingToken;
+  static bool? _refreshSuccessful;
   static int _unauthorizedCount = 0;
   static int _retrySuccessCount = 0;
+  static int _retryFailedCount = 0;
 
   AuthInterceptor({
     required this.tokenStorage,
@@ -26,8 +27,8 @@ class AuthInterceptor extends Interceptor {
   }) : _refreshDio = refreshDio ?? _getRefreshDio(baseUrl);
 
   void _resetTokenRefreshFlags() {
-    if (_isRefreshingToken) _isRefreshingToken = false;
-    if (_refreshSuccessful) _refreshSuccessful = false;
+    if (_isRefreshingToken == true) _isRefreshingToken = null;
+    if (_refreshSuccessful == true) _refreshSuccessful = null;
   }
 
   static Dio _getRefreshDio(String baseUrl) {
@@ -56,7 +57,13 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     _logUnknownErrors(err);
+    if (_refreshSuccessful != null &&
+        (_refreshSuccessful == false || _retryFailedCount == 1)) {
+      Console.log('Refresh previously failed or retried, not retrying.');
+      return;
+    }
     if (err.response?.statusCode == _unAuthCode) {
+      Console.log('⛔️ 401 Unauthorized error detected.');
       _unauthorizedCount++;
       await _handleUnauthorizedError(err, handler);
       return;
@@ -78,7 +85,7 @@ class AuthInterceptor extends Interceptor {
     try {
       await _refreshTokenIfNeeded();
 
-      if (_refreshSuccessful) {
+      if (_refreshSuccessful != null && _refreshSuccessful == true) {
         while (_retrySuccessCount < _unauthorizedCount) {
           Console.log('🔄️ Retrying original request...');
           final response = await _retryRequest(requestOptions);
@@ -88,6 +95,7 @@ class AuthInterceptor extends Interceptor {
         if (_retrySuccessCount >= _unauthorizedCount) {
           _unauthorizedCount = 0;
           _retrySuccessCount = 0;
+          _retryFailedCount = 0;
           _resetTokenRefreshFlags();
           Console.log('🎉 ALL RETRIES successful.');
         }
@@ -103,7 +111,7 @@ class AuthInterceptor extends Interceptor {
       return;
     }
 
-    if (_isRefreshingToken) return;
+    if (_isRefreshingToken == true) return;
 
     _refreshTokenFuture = _performTokenRefresh().catchError((error) {
       _refreshTokenFuture = null;
@@ -155,14 +163,15 @@ class AuthInterceptor extends Interceptor {
     _refreshSuccessful = true;
   }
 
-  Future<Response> _retryRequest(RequestOptions requestOptions) async {
+  Future<Response> _retryRequest(RequestOptions requestOptions,
+      [String? testFailedRetryPath]) async {
     final accessToken = tokenStorage.onGetAccessToken();
     if (accessToken == null) {
       throw Exception('No access token available for retrying request');
     }
     try {
       final response = await _refreshDio.request(
-        requestOptions.path,
+        requestOptions.path + (testFailedRetryPath ?? ''),
         data: requestOptions.data,
         queryParameters: requestOptions.queryParameters,
         options: Options(
@@ -179,6 +188,7 @@ class AuthInterceptor extends Interceptor {
           '✔ RETRY [${response.requestOptions.method}] ${response.requestOptions.path} successful!');
       return response;
     } catch (e) {
+      _retryFailedCount++;
       Console.log(
           '✘ RETRY [${requestOptions.method}] ${requestOptions.path} failed.');
       rethrow;
@@ -190,6 +200,7 @@ class AuthInterceptor extends Interceptor {
     if (accessToken == null) return;
     _unauthorizedCount = 0;
     _retrySuccessCount = 0;
+    _retryFailedCount = 0;
     _resetTokenRefreshFlags();
     await tokenStorage.onClearTokens();
     await authHandler.onSessionExpired();
