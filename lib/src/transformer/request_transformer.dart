@@ -12,7 +12,7 @@ class RequestTransformer extends BackgroundTransformer {
       options.data = formData;
     }
 
-    return super.transformRequest(options);
+    return options.data.toString();
   }
 
   bool _shouldTransformToFormData(dynamic data) {
