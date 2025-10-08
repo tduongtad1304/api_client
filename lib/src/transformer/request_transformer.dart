@@ -1,0 +1,34 @@
+import 'package:api_client/api_client.dart';
+
+class RequestTransformer extends BackgroundTransformer {
+  static const List<String> _fileKeys = ['file', 'image', 'video'];
+
+  @override
+  Future<String> transformRequest(RequestOptions options) async {
+    final data = options.data;
+
+    if (_shouldTransformToFormData(data)) {
+      final formData = await _createFormData(data as Map<String, dynamic>);
+      options.data = formData;
+      options.contentType = 'multipart/form-data';
+    }
+
+    return super.transformRequest(options);
+  }
+
+  bool _shouldTransformToFormData(dynamic data) {
+    return data is Map<String, dynamic> &&
+        _fileKeys.any((key) => data.containsKey(key));
+  }
+
+  Future<FormData> _createFormData(Map<String, dynamic> data) async {
+    for (final key in _fileKeys) {
+      if (data.containsKey(key)) {
+        final multiPart = await MultipartFile.fromFile(data[key]);
+        return FormData.fromMap({key: multiPart});
+      }
+    }
+
+    throw ArgumentError('No valid file key found in data map');
+  }
+}

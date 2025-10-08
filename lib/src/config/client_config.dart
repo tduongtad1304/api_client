@@ -97,6 +97,8 @@ class ApiClientBuilder {
       dio.interceptors.add(interceptor);
     }
 
+    dio.transformer = RequestTransformer();
+
     return ApiClientImpl(dio: dio);
   }
 }
