@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:api_client/api_client.dart';
 
 class RequestTransformer implements Transformer {
@@ -12,7 +14,7 @@ class RequestTransformer implements Transformer {
       options.data = formData;
       if (options.data is FormData &&
           Transformer.isJsonMimeType(options.contentType)) {
-        return options.data;
+        return jsonEncode(options.data);
       }
     }
     return BackgroundTransformer().transformRequest(options);
