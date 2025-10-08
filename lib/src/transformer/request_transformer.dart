@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:api_client/api_client.dart';
 
 class RequestTransformer implements Transformer {
@@ -12,9 +10,12 @@ class RequestTransformer implements Transformer {
     if (_shouldTransformToFormData(data)) {
       final formData = await _createFormData(data);
       options.data = formData;
-      return options.data.toString();
+      if (options.data is FormData &&
+          Transformer.isJsonMimeType(options.contentType)) {
+        return options.data;
+      }
     }
-    return Transformer.defaultTransformRequest(options, jsonEncode);
+    return BackgroundTransformer().transformRequest(options);
   }
 
   bool _shouldTransformToFormData(dynamic data) {
