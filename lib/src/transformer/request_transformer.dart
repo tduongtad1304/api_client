@@ -39,7 +39,7 @@ class RequestTransformer implements Transformer {
   }
 
   @override
-  Future transformResponse(RequestOptions options, ResponseBody responseBody) {
-    throw UnimplementedError();
+  Future transformResponse(RequestOptions options, ResponseBody response) {
+    return BackgroundTransformer().transformResponse(options, response);
   }
 }
