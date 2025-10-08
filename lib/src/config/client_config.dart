@@ -1,7 +1,6 @@
 import 'dart:developer' as developer;
 
 import 'package:api_client/api_client.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 class ApiClientBuilder {
@@ -64,8 +63,12 @@ class ApiClientBuilder {
 
   Dio? get dio => _exposedDio;
 
-  ApiClientBuilder setExposeDio() {
-    _exposedDio = Dio(BaseOptions());
+  ApiClientBuilder setDioExposedEnabled([bool enabled = true]) {
+    if (enabled) {
+      _exposedDio = Dio(BaseOptions());
+    } else {
+      _exposedDio = null;
+    }
     return this;
   }
 

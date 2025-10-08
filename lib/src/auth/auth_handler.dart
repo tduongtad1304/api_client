@@ -1,5 +1,4 @@
 import 'package:api_client/api_client.dart';
-import 'package:dio/dio.dart';
 
 abstract class AuthEventHandler {
   Future<void> onSessionExpired();

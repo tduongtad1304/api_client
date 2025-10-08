@@ -1,4 +1,4 @@
-import 'http_method.dart';
+import 'request_method.dart';
 
 class ApiRequest {
   ApiRequest({

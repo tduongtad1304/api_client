@@ -1,5 +1,4 @@
 import 'package:api_client/api_client.dart';
-import 'package:dio/dio.dart';
 
 class ApiClientImpl implements ApiClientInterface {
   final Dio dio;

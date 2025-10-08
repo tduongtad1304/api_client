@@ -1,7 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../api_client.dart';
+import 'package:api_client/api_client.dart';
 
 class AuthInterceptor extends Interceptor {
   final TokenStorage tokenStorage;

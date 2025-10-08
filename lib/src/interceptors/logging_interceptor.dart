@@ -1,4 +1,4 @@
-import 'package:dio/dio.dart';
+import 'package:api_client/api_client.dart';
 import 'dart:developer' as developer;
 
 enum LogLevel {

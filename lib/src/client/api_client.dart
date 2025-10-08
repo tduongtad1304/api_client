@@ -1,4 +1,4 @@
-import 'package:dio/dio.dart';
+import 'package:api_client/api_client.dart';
 
 abstract interface class ApiClientInterface {
   Future<void> execute(
