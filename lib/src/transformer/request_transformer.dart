@@ -1,6 +1,8 @@
+import 'dart:convert';
+
 import 'package:api_client/api_client.dart';
 
-class RequestTransformer extends Transformer {
+class RequestTransformer implements Transformer {
   static const List<String> _fileKeys = ['file', 'image', 'video'];
 
   @override
@@ -10,8 +12,9 @@ class RequestTransformer extends Transformer {
     if (_shouldTransformToFormData(data)) {
       final formData = await _createFormData(data);
       options.data = formData;
+      return options.data.toString();
     }
-    return options.data?.toString() ?? '';
+    return Transformer.defaultTransformRequest(options, jsonEncode);
   }
 
   bool _shouldTransformToFormData(dynamic data) {
