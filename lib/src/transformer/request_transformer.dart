@@ -23,8 +23,13 @@ class RequestTransformer extends BackgroundTransformer {
   Future<FormData> _createFormData(Map<String, dynamic> data) async {
     for (final key in _fileKeys) {
       if (data.containsKey(key)) {
-        final multiPart = await MultipartFile.fromFile(data[key]);
-        return FormData.fromMap({key: multiPart});
+        try {
+          final multiPart = await MultipartFile.fromFile(data[key]);
+          return FormData.fromMap({key: multiPart});
+        } catch (e) {
+          Console.log('Error creating MultipartFile: $e');
+          throw ArgumentError('Failed to create MultipartFile: $e');
+        }
       }
     }
 
