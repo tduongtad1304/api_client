@@ -1,6 +1,6 @@
 import 'package:api_client/api_client.dart';
 
-class RequestTransformer extends BackgroundTransformer {
+class RequestTransformer extends Transformer {
   static const List<String> _fileKeys = ['file', 'image', 'video'];
 
   @override
@@ -9,13 +9,9 @@ class RequestTransformer extends BackgroundTransformer {
 
     if (_shouldTransformToFormData(data)) {
       final formData = await _createFormData(data);
-      if (options.contentType == Headers.jsonContentType) {
-        options.contentType = null;
-      }
       options.data = formData;
-      return super.transformRequest(options);
     }
-    return super.transformRequest(options);
+    return options.data?.toString() ?? '';
   }
 
   bool _shouldTransformToFormData(dynamic data) {
@@ -37,5 +33,10 @@ class RequestTransformer extends BackgroundTransformer {
     }
 
     throw ArgumentError('No valid file key found in data map');
+  }
+
+  @override
+  Future transformResponse(RequestOptions options, ResponseBody responseBody) {
+    throw UnimplementedError();
   }
 }
