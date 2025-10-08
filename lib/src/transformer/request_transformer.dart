@@ -9,7 +9,9 @@ class RequestTransformer extends BackgroundTransformer {
 
     if (_shouldTransformToFormData(data)) {
       final formData = await _createFormData(data);
-      options.contentType = Headers.multipartFormDataContentType;
+      if (options.contentType == Headers.jsonContentType) {
+        options.contentType = null;
+      }
       options.data = formData;
       return super.transformRequest(options);
     }
