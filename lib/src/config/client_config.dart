@@ -72,7 +72,7 @@ class ApiClientBuilder {
     return this;
   }
 
-  ApiClientInterface build() {
+  ApiClientInterface build([bool forceTransformUploadMediaRequest = true]) {
     final dio = Dio(BaseOptions(baseUrl: _baseUrl));
 
     if (kDebugMode) {
@@ -96,8 +96,9 @@ class ApiClientBuilder {
     for (final interceptor in _additionalInterceptors) {
       dio.interceptors.add(interceptor);
     }
-
-    dio.transformer = RequestTransformer();
+    if (forceTransformUploadMediaRequest) {
+      dio.transformer = RequestTransformer();
+    }
 
     return ApiClientImpl(dio: dio);
   }
