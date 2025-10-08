@@ -5,12 +5,11 @@ class RequestTransformer extends BackgroundTransformer {
 
   @override
   Future<String> transformRequest(RequestOptions options) async {
-    final data = options.data;
+    final data = options.data as Map<String, dynamic>;
 
     if (_shouldTransformToFormData(data)) {
-      final formData = await _createFormData(data as Map<String, dynamic>);
+      final formData = await _createFormData(data);
       options.data = formData;
-      options.contentType = 'multipart/form-data';
     }
 
     return super.transformRequest(options);
