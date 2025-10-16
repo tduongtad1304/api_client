@@ -2,8 +2,9 @@ import 'package:api_client/api_client.dart';
 
 class ApiClientImpl implements ApiClientInterface {
   final Dio dio;
+  final bool useFormDataForMedia;
 
-  ApiClientImpl({required this.dio});
+  ApiClientImpl({required this.dio, required this.useFormDataForMedia});
 
   @override
   Future<void> execute({
@@ -19,6 +20,11 @@ class ApiClientImpl implements ApiClientInterface {
       method: method,
       contentType: Headers.jsonContentType,
     );
+
+    if (useFormDataForMedia &&
+        method.toUpperCase() == RequestMethod.post.value) {
+      body = await RequestTransformer.transformRequest(body);
+    }
 
     try {
       final response = await dio.request(

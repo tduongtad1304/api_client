@@ -1,26 +1,22 @@
 import 'package:api_client/api_client.dart';
 
-class RequestTransformer extends BackgroundTransformer {
+class RequestTransformer {
   static const List<String> _fileKeys = ['file', 'image', 'video'];
 
-  @override
-  Future<String> transformRequest(RequestOptions options) async {
-    final data = options.data as Map<String, dynamic>;
-
+  static Future<dynamic> transformRequest(dynamic data) async {
     if (_shouldTransformToFormData(data)) {
       final formData = await _createFormData(data);
-      options.data = formData;
-      return super.transformRequest(options);
+      return formData;
     }
-    return super.transformRequest(options);
+    return data;
   }
 
-  bool _shouldTransformToFormData(dynamic data) {
+  static bool _shouldTransformToFormData(dynamic data) {
     return data is Map<String, dynamic> &&
         _fileKeys.any((key) => data.containsKey(key));
   }
 
-  Future<FormData> _createFormData(Map<String, dynamic> data) async {
+  static Future<FormData> _createFormData(Map<String, dynamic> data) async {
     for (final key in _fileKeys) {
       if (data.containsKey(key)) {
         try {

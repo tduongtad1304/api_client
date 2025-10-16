@@ -13,6 +13,7 @@ class ApiClientBuilder {
   final List<Interceptor> _additionalInterceptors = [];
   bool _enableShowErrorMessagesLogs = false;
   Dio? _exposedDio;
+  bool _useFormDataForMedia = false;
 
   ApiClientBuilder._internal();
 
@@ -72,7 +73,12 @@ class ApiClientBuilder {
     return this;
   }
 
-  ApiClientInterface build([bool forceTransformUploadMediaRequest = true]) {
+  ApiClientBuilder setUseFormDataForMedia(bool useFormData) {
+    _useFormDataForMedia = useFormData;
+    return this;
+  }
+
+  ApiClientInterface build() {
     final dio = Dio(BaseOptions(baseUrl: _baseUrl));
 
     if (kDebugMode) {
@@ -96,10 +102,7 @@ class ApiClientBuilder {
     for (final interceptor in _additionalInterceptors) {
       dio.interceptors.add(interceptor);
     }
-    if (forceTransformUploadMediaRequest) {
-      dio.transformer = RequestTransformer();
-    }
 
-    return ApiClientImpl(dio: dio);
+    return ApiClientImpl(dio: dio, useFormDataForMedia: _useFormDataForMedia);
   }
 }
