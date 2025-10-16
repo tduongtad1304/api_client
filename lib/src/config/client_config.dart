@@ -13,7 +13,7 @@ class ApiClientBuilder {
   final List<Interceptor> _additionalInterceptors = [];
   bool _enableShowErrorMessagesLogs = false;
   Dio? _exposedDio;
-  bool _useFormDataForMedia = false;
+  bool _useFormDataForMedia = true;
 
   ApiClientBuilder._internal();
 
