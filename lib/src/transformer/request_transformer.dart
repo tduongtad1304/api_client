@@ -1,8 +1,6 @@
-import 'dart:convert';
-
 import 'package:api_client/api_client.dart';
 
-class RequestTransformer implements Transformer {
+class RequestTransformer extends BackgroundTransformer {
   static const List<String> _fileKeys = ['file', 'image', 'video'];
 
   @override
@@ -12,12 +10,9 @@ class RequestTransformer implements Transformer {
     if (_shouldTransformToFormData(data)) {
       final formData = await _createFormData(data);
       options.data = formData;
-      if (options.data is FormData &&
-          Transformer.isJsonMimeType(options.contentType)) {
-        return jsonEncode(options.data);
-      }
+      return super.transformRequest(options);
     }
-    return BackgroundTransformer().transformRequest(options);
+    return super.transformRequest(options);
   }
 
   bool _shouldTransformToFormData(dynamic data) {
@@ -39,10 +34,5 @@ class RequestTransformer implements Transformer {
     }
 
     throw ArgumentError('No valid file key found in data map');
-  }
-
-  @override
-  Future transformResponse(RequestOptions options, ResponseBody response) {
-    return BackgroundTransformer().transformResponse(options, response);
   }
 }
